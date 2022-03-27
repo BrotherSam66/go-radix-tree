@@ -8,8 +8,6 @@ package radix
 import (
 	"errors"
 	"fmt"
-	"go-radix-tree/radix/radixglobal"
-	"go-radix-tree/radix/radixmodels"
 )
 
 /*
@@ -21,7 +19,7 @@ import (
 
 // Deletes 连续删除节点
 // @author https://github.com/BrotherSam66/
-func Deletes() {
+func (r *RadixNode) Deletes() {
 
 	for {
 		var key string
@@ -32,8 +30,8 @@ func Deletes() {
 			return
 		}
 
-		_ = Delete([]byte(key))
-		ShowTree(radixglobal.Root)
+		_ = r.Delete([]byte(key))
+		r.ShowTree()
 		//if key == "-1" {
 		//	return
 		//}
@@ -51,7 +49,7 @@ func Deletes() {
 		//		//Insert(i, "")
 		//	}
 		//
-		//	//ShowTree(radixglobal.Root)
+		//	//ShowTree(root)
 		//	continue
 		//}
 		//if key > 99 || key < 1 {
@@ -59,23 +57,27 @@ func Deletes() {
 		//	continue
 		//}
 		//Insert(key, "")
-		//ShowTree(radixglobal.Root)
+		//ShowTree(root)
 	}
 }
 
 // Delete 删除节点
 // @key 键值
 // @author https://github.com/BrotherSam66/
-func Delete(key []byte) (err error) {
-
-	if radixglobal.Root == nil { // 原树为空树，新加入的转为根
+func (r *RadixNode) Delete(key []byte) (err error) {
+	if len(key) == 0 {
+		err = errors.New("没有输入key内容啊")
+		fmt.Println(err.Error())
+		return
+	}
+	if len(r.Path) == 0 { // 原树为空树
 		err = errors.New("这是一颗空树")
 		fmt.Println(err.Error())
 		return
 	}
 
 	// 从root开始查找附加的位置；tempNode=找到的节点。必须完美找到
-	tempNode, _, tailKey, tailPath, err := Search(key)
+	tempNode, _, tailKey, tailPath, err := r.Search(key)
 
 	/*
 		tempNode.Path 不可能为空
@@ -87,8 +89,10 @@ func Delete(key []byte) (err error) {
 		[4.1]key包含path，==》如果tailKey首字节child==nil，就算找到。（回头在key末尾分叉）
 		[4.2]key包含path，==》如果tailKey首字节child存在==》用 tailKey 向这个child递归
 	*/
-
-	// [1]key=path==》完美找到，替换、补充值
+	if err != nil {
+		return err
+	}
+	// 必须[1]key=path==》完美找到
 	if len(tailKey) != 0 || len(tailPath) != 0 {
 		err = errors.New("没找到这个节点")
 		fmt.Println(err.Error())
@@ -106,7 +110,7 @@ func Delete(key []byte) (err error) {
 		tempNode.PayloadIntSlice = []int{}
 
 		//递归
-		_ = TryMergeParentAndSan(tempNode, tempNode.Child[0])
+		_ = r.TryMergeParentAndSan(tempNode, tempNode.Child[0])
 		return
 	}
 
@@ -114,7 +118,10 @@ func Delete(key []byte) (err error) {
 	if len(tempNode.Child) == 0 {
 
 		if tempNode.Parent == nil { // 我是叶子，也是是根节点.==》删空==》结束
-			radixglobal.Root = nil
+			r.Path = []byte{}
+			r.Payload = ""
+			r.PayloadIntSlice = []int{}
+			r.Child = []*RadixNode{}
 			return
 		}
 		parent := tempNode.Parent
@@ -126,12 +133,16 @@ func Delete(key []byte) (err error) {
 			return
 		}
 		// 删除parent.child[childPoint].相当于删除了这个叶子
-		copy(parent.Child[childPoint+1:], parent.Child[:childPoint-1]) // a[i:]向后移动1个位置
+		parent.Child = append(parent.Child[:childPoint], parent.Child[childPoint+1:]...)
 
-		//递归.parent.Parent 可能= nil
-		_ = TryMergeParentAndSan(parent.Parent, parent)
+		if len(parent.Child) == 1 { // 如果父亲有其他1个兄弟，父亲+兄弟 递归
+			_ = r.TryMergeParentAndSan(parent, parent.Child[0])
+		} else if len(parent.Child) == 0 { // 如果父亲 成了 叶子 ，爷爷+父亲 递归，爷爷可能是nil
+			_ = r.TryMergeParentAndSan(parent.Parent, parent)
+		}
+
+		// 父亲多孩==》技结束
 		return
-
 	}
 	return
 }
@@ -140,11 +151,14 @@ func Delete(key []byte) (err error) {
 // @parent  父节点
 // @san  子节点
 // @Author  https://github.com/BrotherSam66/
-func TryMergeParentAndSan(parent, san *radixmodels.RadixNode) (err error) {
+func (r *RadixNode) TryMergeParentAndSan(parent, san *RadixNode) (err error) {
 	// parent ==root ？？？？
 	if parent == nil { // san 是 root
 		if san.Payload == "" && len(san.PayloadIntSlice) == 0 && len(san.Child) == 0 { // 无payload+无孩子
-			radixglobal.Root = nil
+			r.Path = []byte{}
+			r.Payload = ""
+			r.PayloadIntSlice = []int{}
+			r.Child = []*RadixNode{}
 		}
 		return
 	}
@@ -163,7 +177,7 @@ func TryMergeParentAndSan(parent, san *radixmodels.RadixNode) (err error) {
 	// (parent 单孩+无payload) ==》san合并到parent==》递归
 	if parent.Payload == "" && len(parent.PayloadIntSlice) == 0 {
 		_ = MergeParentAndSan(parent, san)
-		_ = TryMergeParentAndSan(parent.Parent, parent) // 递归
+		_ = r.TryMergeParentAndSan(parent.Parent, parent) // 递归
 		return
 	}
 
@@ -175,14 +189,14 @@ func TryMergeParentAndSan(parent, san *radixmodels.RadixNode) (err error) {
 // @parent  父节点，合并后的节点，由parent代表
 // @san  子节点
 // @Author  https://github.com/BrotherSam66/
-func MergeParentAndSan(parent, san *radixmodels.RadixNode) (err error) {
+func MergeParentAndSan(parent, san *RadixNode) (err error) {
 	// 这里 parent无payload + 有唯一的 san，
-	copy(parent.Path, san.Path)                       // 路劲
-	parent.Payload = san.Payload                      // payload
-	copy(parent.PayloadIntSlice, san.PayloadIntSlice) // payload
-	parent.ChildNum = san.ChildNum                    // childNum
-	parent.Child = parent.Child[0:0]                  // 删除唯一的下联键
-	copy(parent.Child, san.Child)                     // child
+	parent.Path = append(parent.Path, san.Path...) // 路径
+	parent.Payload = san.Payload                   // payload
+	parent.PayloadIntSlice = san.PayloadIntSlice   // payload
+	//parent.ChildNum = san.ChildNum                    // childNum
+	parent.Child = parent.Child[0:0] // 删除唯一的下联键
+	parent.Child = san.Child         // child
 	// san 的孩子的上联
 	for i := 0; i < len(parent.Child); i++ {
 		parent.Child[i].Parent = parent

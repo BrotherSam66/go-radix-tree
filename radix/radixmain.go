@@ -8,7 +8,6 @@ package radix
 import (
 	"errors"
 	"fmt"
-	"go-radix-tree/radix/radixglobal"
 	"math/rand"
 	"os"
 	"strings"
@@ -16,9 +15,11 @@ import (
 )
 
 // RadixMain 字典树
+// @Author  https://github.com/BrotherSam66/
 func RadixMain() {
 	rand.Seed(time.Now().Unix())
-
+	// 指定本轮操作的树是那一颗树
+	root := &RadixNode{}
 	for {
 		var command string
 		fmt.Println("I Insert插入数据")
@@ -32,21 +33,21 @@ func RadixMain() {
 
 		switch command {
 		case "I":
-			Inputs()
+			root.Inputs()
 		case "S":
-			ShowTree(radixglobal.Root)
+			root.ShowTree()
 		case "F":
 			var key string
 			fmt.Println("请输入KEY，按回车键(0退出)：")
 			_, _ = fmt.Scanln(&key)
-			if radixglobal.Root == nil { // 原树为空树，新加入的转为根
+			if root == nil { // 原树为空树，新加入的转为根
 				err := errors.New("这是一颗空树")
 				fmt.Println(err.Error())
 				return
 			}
 
 			// 从root开始查找附加的位置；tempNode=找到的节点。必须完美找到
-			tempNode, _, tailKey, tailPath, err := Search([]byte(key))
+			tempNode, _, tailKey, tailPath, err := root.Search([]byte(key))
 			if err != nil {
 				fmt.Println(err.Error())
 			} else {
@@ -57,7 +58,7 @@ func RadixMain() {
 				}
 			}
 		case "D":
-			Deletes()
+			root.Deletes()
 		case "E":
 			os.Exit(0)
 		default:

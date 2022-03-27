@@ -7,21 +7,20 @@ package radix
 
 import (
 	"fmt"
-	"go-radix-tree/radix/radixmodels"
 )
 
 // ShowTree 逐层显示这个树，
 // @b 展示树的开始位置（可以不从root开始展示）
 // @Author  https://github.com/BrotherSam66/
-func ShowTree(n *radixmodels.RadixNode) {
-	if n == nil { // 先判断，后定义变量，免得浪费内存
+func (r *RadixNode) ShowTree() {
+	if r == nil { // 先判断，后定义变量，免得浪费内存
 		fmt.Println("这个树/分支是空的")
 		return
 	}
-	//fmt.Printf("%#v\n", n)
+	//fmt.Printf("%#v\r", r)
 
 	// ShowTemp 数据。数据可能是nil。最多10层，每层最多1000 数据
-	var showTemp [10][1000]*radixmodels.RadixNode
+	var showTemp [10][1000]*RadixNode
 	//totalLevel := 0             // 总层数
 	//nowLevel := 0               // 当前层数
 	//nnn := Name
@@ -29,7 +28,7 @@ func ShowTree(n *radixmodels.RadixNode) {
 	fmt.Printf("\n展示树：(父|Child数)路径|string载荷|int载荷...\\child-1路径\\child-2路径...")
 	//ShowOneNode(global.Root)
 	//return
-	showTemp[0][0] = n // 来的最高位指针
+	showTemp[0][0] = r // 来的最高位指针
 
 	for i := 1; i < len(showTemp); i++ { // 循环每一层
 		fmt.Println("")              // 先来一个换行
@@ -56,7 +55,7 @@ func ShowTree(n *radixmodels.RadixNode) {
 
 // ShowOneNode 展示单个节点
 // @Author  https://github.com/BrotherSam66/
-func ShowOneNode(n *radixmodels.RadixNode) {
+func ShowOneNode(n *RadixNode) {
 	if n == nil {
 		fmt.Printf("()nil")
 		return
@@ -65,16 +64,16 @@ func ShowOneNode(n *radixmodels.RadixNode) {
 
 	// show父节点
 	if n.Parent == nil {
-		fmt.Printf("(nil|%d)", n.ChildNum)
+		fmt.Printf("(nil|%d)", len(n.Child))
 	} else {
-		fmt.Printf("(%s|%d)", string(n.Parent.Path), n.ChildNum)
+		fmt.Printf("(%s|%d)", string(n.Parent.Path), len(n.Child))
 	}
 
 	// show本节点信息 路径|string载荷|int载荷...
 	fmt.Printf("%s|%s|%v", string(n.Path), n.Payload, n.PayloadIntSlice)
 
 	// show孩子 \child-1路径\child-2路径...
-	for i := 0; i < n.ChildNum; i++ {
+	for i := 0; i < len(n.Child); i++ {
 		fmt.Printf("\\%s", string(n.Child[i].Path))
 	}
 }
