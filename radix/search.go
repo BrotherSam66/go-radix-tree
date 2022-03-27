@@ -170,22 +170,6 @@ func FindChildPointInSlice(tempNode *radixmodels.RadixNode, keyByte byte) (child
 	}
 }
 
-// InsertChildInSlice intSlice指定位置插入inInt
-// @intSlice 被插入的；
-// @inInt 拟插入的值；
-// @intPoint 拟插入的位置
-// @return 返回的切片
-// @Author  https://github.com/BrotherSam66/
-func InsertChildInSlice(tempNode *radixmodels.RadixNode, inChild *radixmodels.RadixNode, insertPoint int) {
-	childes := tempNode.Child
-	childes = append(childes, inChild)                   // 切片扩展1个空间
-	copy(childes[insertPoint+1:], childes[insertPoint:]) // a[i:]向后移动1个位置
-	childes[insertPoint] = inChild                       // 设置新添加的元素
-	tempNode.Child = childes
-	tempNode.ChildNum++
-	return
-}
-
 // FindIntPointInSlice 找int值对应在intSlice的点，
 // @intSlice 被搜索的；
 // @inInt 搜索的关键值；
@@ -214,17 +198,4 @@ func FindIntPointInSlice(intSlice []int, inInt int) (intPoint int, middle int) {
 		}
 	}
 
-}
-
-// InsertIntInSlice intSlice指定位置插入inInt
-// @intSlice 被插入的；
-// @inInt 拟插入的值；
-// @intPoint 拟插入的位置
-// @return 返回的切片
-// @Author  https://github.com/BrotherSam66/
-func InsertIntInSlice(intSlice []int, inInt int, insertPoint int) []int {
-	intSlice = append(intSlice, 0)                         // 切片扩展1个空间
-	copy(intSlice[insertPoint+1:], intSlice[insertPoint:]) // a[i:]向后移动1个位置
-	intSlice[insertPoint] = inInt                          // 设置新添加的元素
-	return intSlice
 }

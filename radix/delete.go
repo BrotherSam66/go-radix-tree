@@ -136,6 +136,10 @@ func Delete(key []byte) (err error) {
 	return
 }
 
+// TryMergeParentAndSan 尝试合并父子节点
+// @parent  父节点
+// @san  子节点
+// @Author  https://github.com/BrotherSam66/
 func TryMergeParentAndSan(parent, san *radixmodels.RadixNode) (err error) {
 	// parent ==root ？？？？
 	if parent == nil { // san 是 root
@@ -167,6 +171,10 @@ func TryMergeParentAndSan(parent, san *radixmodels.RadixNode) (err error) {
 	return
 }
 
+// MergeParentAndSan 真实合并父子节点
+// @parent  父节点，合并后的节点，由parent代表
+// @san  子节点
+// @Author  https://github.com/BrotherSam66/
 func MergeParentAndSan(parent, san *radixmodels.RadixNode) (err error) {
 	// 这里 parent无payload + 有唯一的 san，
 	copy(parent.Path, san.Path)                       // 路劲
