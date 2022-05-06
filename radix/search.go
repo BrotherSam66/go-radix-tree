@@ -200,6 +200,9 @@ func FindChildPointInSlice(tempNode *RadixNode, keyByte byte) (childPoint int, m
 // @middle 未必找到，但是如果插入，应该放入的点，
 // @Author  https://github.com/BrotherSam66/
 func FindIntPointInSlice(intSlice []int, inInt int) (intPoint int, middle int) {
+	if len(intSlice) == 0 { // 为了解决 /api/v1/sysUser GET 崩溃问题
+		return -1, 0
+	}
 	intPoint = -1
 	left := 0
 	right := len(intSlice) - 1

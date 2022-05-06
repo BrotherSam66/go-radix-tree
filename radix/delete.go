@@ -23,6 +23,7 @@ func (r *RadixNode) Deletes() {
 
 	for {
 		var key string
+		var payloadInt int
 		fmt.Println("请输入KEY，按回车键(空按回车随机，-1退出)：")
 		_, _ = fmt.Scanln(&key)
 
@@ -30,7 +31,10 @@ func (r *RadixNode) Deletes() {
 			return
 		}
 
-		_ = r.Delete([]byte(key))
+		fmt.Println("请输入payloadInt，按回车键：")
+		_, _ = fmt.Scanln(&payloadInt)
+
+		_ = r.Delete([]byte(key), payloadInt)
 		r.ShowTree()
 		//if key == "-1" {
 		//	return
@@ -64,7 +68,7 @@ func (r *RadixNode) Deletes() {
 // Delete 删除节点
 // @key 键值
 // @author https://github.com/BrotherSam66/
-func (r *RadixNode) Delete(key []byte) (err error) {
+func (r *RadixNode) Delete(key []byte, payloadInt int) (err error) {
 	if len(key) == 0 {
 		err = errors.New("没有输入key内容啊")
 		fmt.Println(err.Error())
@@ -98,6 +102,27 @@ func (r *RadixNode) Delete(key []byte) (err error) {
 		fmt.Println(err.Error())
 		return
 	}
+
+	// 到这里是准确找到了
+	// 先尝试删减 payloadInt
+	intPoint, _ := FindIntPointInSlice(tempNode.PayloadIntSlice, payloadInt)
+	if intPoint < 0 { // 没有这个节点
+		err = errors.New("拟删除的payloadInt 节点里没有")
+		fmt.Println(err.Error())
+		return
+	}
+
+	// 到这里，肯定命中一个int。
+	// 有多个int，且命中一个。删掉这个int就好
+	if intPoint > -1 && len(tempNode.PayloadIntSlice) > 1 {
+		for i := intPoint; i < len(tempNode.PayloadIntSlice)-1; i++ {
+			tempNode.PayloadIntSlice[i] = tempNode.PayloadIntSlice[i+1]
+		}
+		tempNode.PayloadIntSlice = tempNode.PayloadIntSlice[:len(tempNode.PayloadIntSlice)-1] // 删掉尾巴
+		return
+	}
+
+	// 到这里，就是命中唯一的int。需要完全删除节点
 	if tempNode.Payload == "" && len(tempNode.PayloadIntSlice) == 0 && len(tempNode.Child) > 1 {
 		err = errors.New("找到的是分支节点没有payload，无从删除")
 		fmt.Println(err.Error())

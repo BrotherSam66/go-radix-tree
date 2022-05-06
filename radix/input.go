@@ -166,6 +166,9 @@ func InsertChildInSlice(tempNode *RadixNode, inChild *RadixNode, insertPoint int
 func (n *RadixNode) InsertIntInSlice(inInt int, insertPoint int) {
 	// Slice 是引用类型，必须逐个元素搬移
 	n.PayloadIntSlice = append(n.PayloadIntSlice, inInt) // 只是扩容
+	if len(n.PayloadIntSlice) == 1 {                     // 为了解决 /api/v1/sysUser GET 崩溃问题，空的插入还是空的
+		return
+	}
 	// 逐个向后搬移。尾开始，结束insertPoint+1，刚好把搬走
 	for i := len(n.PayloadIntSlice) - 1; i > insertPoint; i-- {
 		n.PayloadIntSlice[i] = n.PayloadIntSlice[i-1]
